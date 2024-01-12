@@ -1,0 +1,127 @@
+package nl.stansmits.iprwc.security;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import javax.servlet.http.HttpServletResponse;
+
+import nl.stansmits.iprwc.config.ConfigProperties;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+/**
+ * The security configuration
+ */
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Autowired
+    private JWTFilter filter;
+    @Autowired
+    private MyUserDetailsService uds;
+    @Autowired
+    private ConfigProperties config;
+
+    /**
+     * This filter chain is used to filter every request.
+     * It checks roles and headers.
+     * 
+     * @param http the security config
+     * @return the filter chain
+     * @throws Exception if the filter chain fails
+     */
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf().disable()
+                .httpBasic().disable()
+                .cors()
+                .and()
+                .authorizeHttpRequests()
+                .antMatchers("/auth/**").permitAll()
+                .antMatchers("/auth/register").hasRole("ADMIN")
+                .antMatchers("/entry/export/**").hasAnyRole("EMPLOYEE", "ADMIN")
+                .antMatchers("/entry/**").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.GET, "/questionnaire/all").authenticated()
+                .antMatchers(HttpMethod.PUT, "/questionnaire/").hasAnyRole("EMPLOYEE", "ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/questionnaire/{id}").hasAnyRole("EMPLOYEE", "ADMIN")
+                .antMatchers("/user/me").authenticated()
+                .antMatchers(HttpMethod.POST, "/user/{id}").permitAll()
+                .antMatchers("/user/**").hasRole("ADMIN")
+                .and()
+                .userDetailsService(uds)
+                .exceptionHandling()
+                .authenticationEntryPoint(
+                        (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                                "Unauthorized"))
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+
+        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    /**
+     * This bean is used to fetch the preconfigured password encoder
+     * 
+     * @return the password encoder
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * This bean is used to fetch the authentication manager
+     * 
+     * @param authenticationConfiguration the authentication configuration
+     * @return the authentication manager
+     * @throws Exception if the authentication manager cannot be created
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        ArrayList<String> allowedOrigins = new ArrayList<String>();
+        if (config.getHost() != null) {
+            allowedOrigins.add(String.format("http://%s", config.getHost()));
+            allowedOrigins.add(String.format("https://%s", config.getHost()));
+        }
+        allowedOrigins.add("http://localhost:4200");
+        allowedOrigins.add("http://localhost:8080");
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedMethods(Arrays.asList("HEAD",
+                "GET", "POST", "PUT", "DELETE", "PATCH"));
+        // setAllowCredentials(true) is important, otherwise:
+        // The value of the 'Access-Control-Allow-Origin' header in the response must
+        // not be the wildcard '*' when the request's credentials mode is 'include'.
+        configuration.setAllowCredentials(true);
+        // setAllowedHeaders is important! Without it, OPTIONS preflight request
+        // will fail with 403 Invalid CORS request
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+}
