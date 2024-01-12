@@ -1,0 +1,22 @@
+.card-login-img{
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: url("../../../assets/img/LOGO_CN.png");
+  background-size: 15rem;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+.centrerenIsMoeielijkHeVince {
+  justify-items: center;
+  align-items: center;
+}
+
+@keyframes wave {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}

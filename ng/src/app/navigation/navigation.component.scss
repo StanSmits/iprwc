@@ -1,0 +1,23 @@
+.navigation__nav {
+  background: #20285a;
+}
+
+.navbar-toggler {
+  background-color: revert;
+}
+
+.navbar-toggler:hover {
+  color: #000;
+  background-color: #d3d4d5;
+  border-color: #c6c7c8;
+}
+
+.nav-link {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: white;
+}
+
+.active > a {
+  color: #e76352;
+}

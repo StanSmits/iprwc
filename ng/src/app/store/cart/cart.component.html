@@ -1,0 +1,220 @@
+<router-outlet></router-outlet>
+<app-toasts></app-toasts>
+<app-navigation></app-navigation>
+<app-toasts></app-toasts>
+
+<div class="container">
+  <main *ngIf="loggedIn">
+    <div class="py-5 text-center">
+      <img
+        class="d-block mx-auto mb-4"
+        src="assets\img\LOGO_CN.png"
+        alt=""
+        width="72"
+      />
+      <h2>Winkel Kar</h2>
+    </div>
+
+    <div class="row g-5">
+      <div class="col-md-5 col-lg-4 order-md-last">
+        <h4 class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-primary">In jou kar</span>
+          <span class="badge bg-primary rounded-pill">{{ amountOfItems }}</span>
+        </h4>
+        <ul class="list-group mb-3">
+          <li
+            class="list-group-item d-flex justify-content-between lh-sm"
+            *ngFor="let item of cartItems"
+          >
+            <div>
+              <h6 class="my-0">{{ item.name }}</h6>
+            </div>
+            <span class="text-body-secondary"
+              >€ {{ item.price }}
+              <span
+                class="text-body-secondary"
+                style="cursor: pointer"
+                (click)="removeItemFromCart(item)"
+                ><i class="bi bi-trash"></i
+              ></span>
+            </span>
+          </li>
+          <li
+            class="list-group-item d-flex justify-content-between bg-body-tertiary"
+            *ngIf="promoCode"
+          >
+            <div class="text-success">
+              <h6 class="my-0">{{ this.promoCode.code }}</h6>
+              <small>{{ this.promoCode.description }}</small>
+            </div>
+            <span class="text-success"
+              >{{ this.promoCode.discount }} % korting</span
+            >
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Totaal (EUR)</span>
+            <strong>€ {{ totalPrice }}</strong>
+          </li>
+        </ul>
+        <form
+          class="card p-2"
+          [formGroup]="promoCodeForm"
+          (submit)="onPromoCodeSubmit()"
+        >
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Promo code"
+              formControlName="promocode"
+            />
+            <button
+              type="submit"
+              class="btn btn-secondary"
+              [disabled]="!promoCodeForm.valid"
+            >
+              Verzilveren
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="col-md-7 col-lg-8">
+        <h4 class="mb-3">Verzend & factuur adres</h4>
+        <form
+          class="needs-validation"
+          novalidate
+          [formGroup]="cartForm"
+          (submit)="onSubmit()"
+        >
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label for="firstName" class="form-label">Voornaam</label>
+              <input
+                type="text"
+                class="form-control"
+                id="firstName"
+                placeholder=""
+                value=""
+                required
+                formControlName="firstName"
+              />
+            </div>
+
+            <div class="col-sm-6">
+              <label for="lastName" class="form-label"
+                >Tussenvoegsel en achternaam</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="lastName"
+                placeholder=""
+                value=""
+                required
+                formControlName="lastName"
+              />
+            </div>
+
+            <div class="col-12">
+              <label for="email" class="form-label">Email</label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                placeholder="you@example.com"
+                formControlName="email"
+              />
+            </div>
+
+            <div class="col-12">
+              <label for="address" class="form-label"
+                >Straatnaam en huisnummer</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="address"
+                placeholder="1234 Main St"
+                required
+                formControlName="address"
+              />
+            </div>
+
+            <div class="col-12">
+              <label for="address2" class="form-label"
+                >Adresregel 2
+                <span class="text-body-secondary">(Optioneel)</span></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="address2"
+                placeholder="Apartment or suite"
+                formControlName="address2"
+              />
+            </div>
+
+            <div class="col-md-6">
+              <label for="zip" class="form-label">Postcode</label>
+              <input
+                type="text"
+                class="form-control"
+                id="zip"
+                placeholder=""
+                required
+                formControlName="zipCode"
+              />
+            </div>
+
+            <div class="col-md-6">
+              <label for="country" class="form-label">Land</label>
+              <select
+                class="form-select"
+                id="country"
+                required
+                formControlName="country"
+              >
+                <option value="">Kies...</option>
+                <option>Nederland</option>
+              </select>
+            </div>
+          </div>
+
+          <h4 class="mb-3">Betaling</h4>
+
+          <div class="my-3">
+            <div class="form-check">
+              <input
+                id="credit"
+                name="paymentMethod"
+                type="radio"
+                class="form-check-input"
+                value="niet"
+                checked
+                required
+                formControlName="paymentMethod"
+              />
+              <label class="form-check-label" for="credit">Niet</label>
+            </div>
+          </div>
+          <hr class="my-4" />
+
+          <button
+            class="w-100 btn btn-primary btn-lg"
+            type="submit"
+            [disabled]="cartForm.valid"
+          >
+            Betalen
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <main *ngIf="!loggedIn">
+    <h1>Je moet ingelogd zijn om te kunnen bestellen</h1>
+    <a routerLink="/login" class="btn btn-primary">Login</a>
+  </main>
+</div>
+
+<app-footer></app-footer>
